@@ -23,18 +23,27 @@ const App = () => {
 
   const handleStartQuiz = async () => {
     try {
-      await axios.post('http://localhost:8000/files/', { content: fileContent }, {
-        headers: { 'Content-Type': 'application/json' },
+      const file = document.querySelector('input[type="file"]').files[0];
+      const formData = new FormData();
+      formData.append('value', file); // 👈 имя ключа value, как требует сервер
+
+      await axios.post('http://127.0.0.1:8000/files/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
+
       setQuizStarted(true);
     } catch (error) {
       console.error('Ошибка при отправке файла:', error);
     }
   };
 
+
+
   useEffect(() => {
     if (quizStarted) {
-      axios.get('http://localhost:8000/cards/')
+      axios.get('http://127.0.0.1:8000/cards/')
         .then((response) => {
           const serverData = response.data.map((card) => ({
             text: card.question,
@@ -50,7 +59,7 @@ const App = () => {
           }));
           setQuizData(serverData);
 
-          return axios.post('http://localhost:8000/cards/clear/');
+          return axios.post('http://127.0.0.1:8000/cards/clear/');
         })
         .then(() => {
           console.log('Карточки успешно удалены после загрузки');
@@ -131,7 +140,6 @@ const App = () => {
         <div className="start-screen">
           <input
             type="file"
-            accept=".txt"
             onChange={handleFileChange}
             className="input-file"
           />
