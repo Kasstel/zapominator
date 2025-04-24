@@ -6,7 +6,66 @@ const App = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [fileContent, setFileContent] = useState('');
   const [quizStarted, setQuizStarted] = useState(false);
-  const [quizData, setQuizData] = useState([]);
+  //const [quizData, setQuizData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  
+  const [quizData, setQuizData] = useState([
+    {
+      text: "Что такое хранилище в контексте веб-приложений?",
+      options: [
+        { text: "Место для обработки данных", isCorrect: false },
+        { text: "Место для хранения данных", isCorrect: true },
+        { text: "Место для шифрования данных", isCorrect: false },
+      ],
+      selectedAnswer: null,
+      isAnswered: false,
+      isCorrect: false
+    },
+    {
+      text: "Какие данные можно хранить в файле?",
+      options: [
+        { text: "Только текстовую информацию", isCorrect: false },
+        { text: "Любые данные: текст, изображения, видео, и т.д.", isCorrect: true }
+      ],
+      selectedAnswer: null,
+      isAnswered: false,
+      isCorrect: false
+    },
+    {
+      text: "Какой формат файла используется для хранения изображений?",
+      options: [
+        { text: ".txt", isCorrect: false },
+        { text: ".jpg", isCorrect: true }
+      ],
+      selectedAnswer: null,
+      isAnswered: false,
+      isCorrect: false
+    },
+    {
+      text: "Как можно обработать файл в браузере?",
+      options: [
+        { text: "Только с помощью серверной обработки", isCorrect: false },
+        { text: "С помощью FileReader API", isCorrect: true }
+      ],
+      selectedAnswer: null,
+      isAnswered: false,
+      isCorrect: false
+    },
+    {
+      text: "Что такое CORS (Cross-Origin Resource Sharing)?",
+      options: [
+        { text: "Механизм защиты от злоумышленников, который ограничивает доступ к ресурсам", isCorrect: true },
+        { text: "Механизм, позволяющий загружать файлы с удаленных серверов", isCorrect: false }
+      ],
+      selectedAnswer: null,
+      isAnswered: false,
+      isCorrect: false
+    }
+  ]);
+
+
+
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -22,10 +81,14 @@ const App = () => {
   };
 
   const handleStartQuiz = async () => {
+    setQuizStarted(true);
+    /*
     try {
       const file = document.querySelector('input[type="file"]').files[0];
       const formData = new FormData();
       formData.append('value', file); // 👈 имя ключа value, как требует сервер
+
+      setLoading(true); // Начинаем показывать лоадер
 
       await axios.post('http://127.0.0.1:8000/files/', formData, {
         headers: {
@@ -37,12 +100,20 @@ const App = () => {
     } catch (error) {
       console.error('Ошибка при отправке файла:', error);
     }
+      */
   };
 
-
+  const handleExitQuiz = () => {
+    setQuizStarted(false);
+    setCurrentQuestionIndex(0);
+    setQuizData([]);
+    setFileContent('');
+  };
 
   useEffect(() => {
     if (quizStarted) {
+      setLoading(true); // Показываем лоадер перед загрузкой данных
+
       axios.get('http://127.0.0.1:8000/cards/')
         .then((response) => {
           const serverData = response.data.map((card) => ({
@@ -59,13 +130,11 @@ const App = () => {
           }));
           setQuizData(serverData);
 
-          return axios.post('http://127.0.0.1:8000/cards/clear/');
-        })
-        .then(() => {
-          console.log('Карточки успешно удалены после загрузки');
+          setLoading(false); // Скрываем лоадер после получения данных
         })
         .catch((error) => {
-          console.error('Ошибка при получении или удалении карточек:', error);
+          console.error('Ошибка при получении карточек:', error);
+          setLoading(false); // Скрываем лоадер в случае ошибки
         });
     }
   }, [quizStarted]);
@@ -149,10 +218,17 @@ const App = () => {
             </button>
           )}
         </div>
+      ) : loading ? (
+        <div className="loader"></div> 
       ) : currentQuestionIndex < quizData.length ? (
         renderQuestion(quizData[currentQuestionIndex], currentQuestionIndex)
       ) : (
         <div className="result">Тест завершен!</div>
+      )}
+      {quizStarted && (
+        <button className="exit-btn" onClick={handleExitQuiz}>
+          Выйти на начальный экран
+        </button>
       )}
     </div>
   );

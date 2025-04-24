@@ -216,3 +216,36 @@
   border-radius: 8px;
   cursor: pointer;
 }
+
+
+.loader {
+  border: 8px solid #f3f3f3; /* светлый фон круга */
+  border-top: 8px solid #3498db; /* цвет анимации */
+  border-radius: 50%; /* создаем круг */
+  width: 50px; /* размер круга */
+  height: 50px; /* размер круга */
+  animation: spin 2s linear infinite; /* анимация вращения */
+  margin: 0 auto; /* выравнивание по центру */
+}
+
+/* Анимация вращения */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.exit-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 10px 20px;
+  background-color: #3f0a35;
+  color: rgb(233, 188, 233);
+  border: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s linear;
+}
+
+.exit-btn:hover {
+  background-color: #0d81a8;
+}
