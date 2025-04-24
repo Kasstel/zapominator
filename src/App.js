@@ -6,10 +6,10 @@ const App = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [fileContent, setFileContent] = useState('');
   const [quizStarted, setQuizStarted] = useState(false);
-  //const [quizData, setQuizData] = useState([]);
+  const [quizData, setQuizData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  
+  /*
   const [quizData, setQuizData] = useState([
     {
       text: "Что такое хранилище в контексте веб-приложений?",
@@ -62,8 +62,9 @@ const App = () => {
       isAnswered: false,
       isCorrect: false
     }
+    
   ]);
-
+*/
 
 
 
@@ -81,8 +82,8 @@ const App = () => {
   };
 
   const handleStartQuiz = async () => {
-    setQuizStarted(true);
-    /*
+    //setQuizStarted(true);
+  
     try {
       const file = document.querySelector('input[type="file"]').files[0];
       const formData = new FormData();
@@ -100,7 +101,7 @@ const App = () => {
     } catch (error) {
       console.error('Ошибка при отправке файла:', error);
     }
-      */
+      
   };
 
   const handleExitQuiz = () => {
