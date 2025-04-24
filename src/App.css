@@ -1,0 +1,218 @@
+.quiz-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+}
+
+.card{
+  max-width: 500px;
+  min-height: 350px;
+  background: #07182E;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  place-content: center;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 50px
+}
+
+.card h3 {
+  z-index: 1;
+  color: white;
+  font-size: 1.5em;
+  text-align: center;
+}
+
+.options, .input-file {
+  display: flex;
+  z-index: 1;
+  color: white;
+  font-size: 1.5em;
+  height: 100%;
+}
+
+.input-file:hover{
+  background-color: #612d6e;
+}
+
+.input-file{
+  display: inline-block;
+  padding: 10px 20px;
+  margin: 10px 10px;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+  border-radius: 20px;
+}
+
+.result{
+  color: white;
+}
+
+.feedback{
+  z-index: 1;
+  color: white;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.option, .next-btn{
+  align-items: center;
+  appearance: none;
+  background-color: #EEF2FF;
+  border-radius: 8px;
+  border-width: 2px;
+  border-color: #536DFE;
+  box-shadow: rgba(83, 109, 254, 0.2) 0 2px 4px, rgba(83, 109, 254, 0.15) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+  box-sizing: border-box;
+  color: rgba(83, 109, 254, 0.2) 0 2px 4px, rgba(83, 109, 254, 0.15) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: "JetBrains Mono", monospace;
+  height: 60px;
+  justify-content: center;
+  line-height: 1;
+  list-style: none;
+  overflow: hidden;
+  padding: 24px;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  transition: box-shadow 0.15s, transform 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  word-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  will-change: box-shadow, transform;
+  font-size: 20px;
+  width: 100%;
+}
+
+.option:focus, .next-btn:focus {
+  outline: none;
+  box-shadow: #D6D6E7 0 0 0 1.5px inset, rgba(83, 109, 254, 0.4) 0 2px 4px, rgba(83, 109, 254, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+}
+
+.option:hover, .next-btn:hover{
+  box-shadow: rgba(83, 109, 254, 0.3) 0 4px 8px, rgba(83, 109, 254, 0.2) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+  transform: translateY(-2px);
+}
+
+.correct-feedback, .incorrect-feedback{
+  font-family: "JetBrains Mono", monospace;
+
+}
+.correct-feedback{
+  color: #4caf50
+}
+
+.incorrect-feedback{
+  color:#f44336
+}
+
+.next-btn{
+  height: 36px;
+}
+
+.option:active, .next-btn:active{
+  box-shadow: #D6D6E7 0 3px 7px inset;
+  transform: translateY(2px);
+}
+
+
+.card::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  background-image: linear-gradient(180deg, rgb(0, 183, 255), rgb(255, 48, 255));
+  height: 130%;
+  animation: rotBGimg 8s linear infinite;
+  transition: all 0.9s linear;
+}
+
+@keyframes rotBGimg {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  background: #07182E;
+  ;
+  inset: 5px;
+  border-radius: 15px;
+}  
+
+.options {
+  display: flex;
+  flex-direction: column;
+}
+
+.option {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  margin: 5px 0;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.option.correct {
+  background-color: #4caf50; /* Зеленый для правильного */
+  color: white;
+}
+
+.option.incorrect {
+  background-color: #f44336; /* Красный для неправильного */
+  color: white;
+}
+
+.next-btn {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.result {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px;
+}
+
+.start-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
