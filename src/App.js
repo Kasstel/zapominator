@@ -4,174 +4,229 @@ import './App.css';
 
 const App = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [fileContent, setFileContent] = useState('');
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizData, setQuizData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);  // Добавляем состояние для отслеживания загрузки
+  const [isLoading, setIsLoading] = useState(false);
+  const [savedFiles, setSavedFiles] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileName, setFileName] = useState('');
+
+  useEffect(() => {
+    const storedFiles = JSON.parse(localStorage.getItem('quizFiles')) || [];
+    setSavedFiles(storedFiles);
+  }, []);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      setFileContent(e.target.result);
-    };
-
-    if (file) {
-      reader.readAsText(file);
-    }
+    setFileName(file.name);
   };
 
-  const handleStartQuiz = async () => {
-    setIsLoading(true);  // Начинаем загрузку
-    setLoading(true);
+  const handleUploadFile = async () => {
+    setIsLoading(true);
     try {
       const file = document.querySelector('input[type="file"]').files[0];
       const formData = new FormData();
       formData.append('value', file);
 
-      await axios.post('http://127.0.0.1:8000/files/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      setQuizStarted(true);
+      await axios.post('http://127.0.0.1:8000/files/', formData);
+      const response = await axios.get('http://127.0.0.1:8000/cards/');
+      await axios.post('http://127.0.0.1:8000/cards/clear/');
+
+      const newFile = {
+        name: file.name,
+        questions: response.data.map(q => ({
+          ...q,
+          progress: { correctCount: 0, lastAnswered: null },
+          status: null,
+          marked: false
+        })),
+      };
+
+      const updatedFiles = [...savedFiles, newFile];
+      localStorage.setItem('quizFiles', JSON.stringify(updatedFiles));
+      setSavedFiles(updatedFiles);
+      setSelectedFile(newFile);
     } catch (error) {
-      console.error('Ошибка при отправке файла:', error);
+      console.error('Ошибка:', error);
     } finally {
-      setIsLoading(false);  // Останавливаем загрузку после завершения
-      setLoading(false);
+      setIsLoading(false);
     }
+  };
+
+  const startQuiz = (file) => {
+    const sortedQuestions = [...file.questions].sort((a, b) =>
+        a.marked === b.marked ? 0 : a.marked ? -1 : 1
+    );
+
+    setQuizData(sortedQuestions.map(q => ({
+      ...q,
+      options: [
+        { text: q.right_answer, isCorrect: true },
+        { text: q.answer1, isCorrect: false },
+        { text: q.answer2, isCorrect: false },
+        { text: q.answer3, isCorrect: false },
+      ].sort(() => Math.random() - 0.5),
+      selectedAnswer: null,
+      isAnswered: false,
+    })));
+
+    setQuizStarted(true);
+    setCurrentQuestionIndex(0);
+  };
+
+  const handleAnswerSelect = (questionIndex, option) => {
+    const updatedQuiz = [...quizData];
+    const question = updatedQuiz[questionIndex];
+
+    question.selectedAnswer = option;
+    question.isAnswered = true;
+    question.isCorrect = option.isCorrect;
+
+    setQuizData(updatedQuiz);
+
+    if (option.isCorrect) {
+      setTimeout(() => setCurrentQuestionIndex(prev => prev + 1), 1000);
+    }
+  };
+
+  const toggleMark = (questionIndex) => {
+    const updatedFiles = savedFiles.map(file =>
+        file.name === selectedFile.name ? {
+          ...file,
+          questions: file.questions.map((q, idx) =>
+              idx === questionIndex ? { ...q, marked: !q.marked } : q
+          )
+        } : file
+    );
+
+    localStorage.setItem('quizFiles', JSON.stringify(updatedFiles));
+    setSavedFiles(updatedFiles);
+
+    const updatedQuiz = [...quizData];
+    updatedQuiz[questionIndex].marked = !updatedQuiz[questionIndex].marked;
+    setQuizData(updatedQuiz);
   };
 
   const handleExitQuiz = () => {
     setQuizStarted(false);
     setCurrentQuestionIndex(0);
-    setQuizData([]);
-    setFileContent('');
-  };
-
-  useEffect(() => {
-    if (quizStarted) {
-      axios.get('http://127.0.0.1:8000/cards/')
-          .then((response) => {
-            const serverData = response.data.map((card) => ({
-              text: card.question,
-              options: [
-                { text: card.right_answer, isCorrect: true },
-                { text: card.answer1, isCorrect: false },
-                { text: card.answer2, isCorrect: false },
-                { text: card.answer3, isCorrect: false },
-              ].sort(() => Math.random() - 0.5),
-              selectedAnswer: null,
-              isAnswered: false,
-              isCorrect: false,
-            }));
-            setQuizData(serverData);
-
-            setLoading(false); // Скрываем лоадер после получения данных
-          })
-          .catch((error) => {
-            console.error('Ошибка при получении карточек:', error);
-            setLoading(false); // Скрываем лоадер в случае ошибки
-          });
-    }
-  }, [quizStarted]);
-
-  const handleAnswerSelect = (questionIndex, option) => {
-    const updatedQuiz = [...quizData];
-    updatedQuiz[questionIndex].selectedAnswer = option;
-    updatedQuiz[questionIndex].isAnswered = true;
-    updatedQuiz[questionIndex].isCorrect = option.isCorrect;
-
-    if (!option.isCorrect) {
-      const [incorrectQuestion] = updatedQuiz.splice(questionIndex, 1);
-      updatedQuiz.push(incorrectQuestion);
-    }
-
-    setQuizData(updatedQuiz);
-  };
-
-  const handleNextQuestion = () => {
-    if (quizData[currentQuestionIndex].isCorrect) {
-      setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
-    } else {
-      setQuizData((prevData) =>
-          prevData.map((q, idx) =>
-              idx === currentQuestionIndex
-                  ? { ...q, isAnswered: false, selectedAnswer: null }
-                  : q
-          )
-      );
-    }
-  };
-
-  const renderQuestion = (question, index) => {
-    return (
-        <div className="card" key={index}>
-          <h3>{question.text}</h3>
-          <div className="options">
-            {question.options.map((option, idx) => (
-                <button
-                    key={idx}
-                    className={`option ${
-                        question.selectedAnswer === option
-                            ? option.isCorrect
-                                ? 'correct'
-                                : 'incorrect'
-                            : ''
-                    }`}
-                    onClick={() => handleAnswerSelect(index, option)}
-                    disabled={question.isAnswered}
-                >
-                  {option.text}
-                </button>
-            ))}
-          </div>
-          {question.isAnswered && (
-              <div className="feedback">
-                <p className={question.isCorrect ? 'correct-feedback' : 'incorrect-feedback'}>
-                  {question.isCorrect ? 'Правильный ответ!' : 'Неправильный ответ!'}
-                </p>
-                <button className="next-btn" onClick={handleNextQuestion}>
-                  Далее
-                </button>
-              </div>
-          )}
-        </div>
-    );
+    setSelectedFile(null);
   };
 
   return (
       <div className="quiz-container">
         {!quizStarted ? (
             <div className="start-screen">
-              <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="input-file"
-              />
-              {fileContent && (
-                  <button className="start-btn" onClick={handleStartQuiz} disabled={isLoading}>
-                    {isLoading ? (
-                        <div className="spinner"></div>  // Добавляем спиннер
-                    ) : (
-                        'Создать тест'
+              {selectedFile ? (
+                  <div className="file-details">
+                    <button className="start-btn" onClick={() => setSelectedFile(null)}>
+                      ← Назад
+                    </button>
+                    <h2>{selectedFile.name}</h2>
+
+                    <div className="questions-list">
+                      {selectedFile.questions
+                          .filter(q => q.status || q.marked)
+                          .map((q, idx) => (
+                              <div key={idx} className="question-item">
+                                <div className="question-header">
+                                  {q.status === 'learned' && <span className="status learned">✅ Запомнил</span>}
+                                  {q.status === 'needsReview' && <span className="status needs-review">🔄 Повторить</span>}
+                                  {q.marked && <span className="status marked">⭐ Отмечен</span>}
+                                  <p>{q.question}</p>
+                                </div>
+                              </div>
+                          ))}
+                    </div>
+
+                    <button className="start-btn" onClick={() => startQuiz(selectedFile)}>
+                      Начать тест
+                    </button>
+                  </div>
+              ) : (
+                  <>
+                    {savedFiles.map(file => (
+                        <div
+                            key={file.name}
+                            className="file-item"
+                            onClick={() => setSelectedFile(file)}
+                        >
+                          {file.name}
+                        </div>
+                    ))}
+
+                    <label className="file-upload">
+                      <input type="file" onChange={handleFileChange} />
+                      {fileName || 'Выберите файл'}
+                      {isLoading && <div className="spinner" />}
+                    </label>
+                    {fileName && !isLoading && (
+                        <button className="upload-btn" onClick={handleUploadFile}>
+                          Загрузить файл
+                        </button>
                     )}
-                  </button>
+                  </>
               )}
             </div>
-        ) : loading ? (
-            <div className="loader"></div>
+        ) : isLoading ? (
+            <div className="loader">
+              <div className="spinner" />
+            </div>
         ) : currentQuestionIndex < quizData.length ? (
-            renderQuestion(quizData[currentQuestionIndex], currentQuestionIndex)
+            <div className="card">
+              <h3>{quizData[currentQuestionIndex].question}</h3>
+
+              <div className="options">
+                {quizData[currentQuestionIndex].options.map((option, idx) => (
+                    <button
+                        key={idx}
+                        className={`option ${
+                            quizData[currentQuestionIndex].selectedAnswer === option
+                                ? option.isCorrect ? 'correct' : 'incorrect'
+                                : ''
+                        }`}
+                        onClick={() => handleAnswerSelect(currentQuestionIndex, option)}
+                        disabled={quizData[currentQuestionIndex].isAnswered}
+                    >
+                      {option.text}
+                    </button>
+                ))}
+              </div>
+
+              {quizData[currentQuestionIndex].isAnswered && (
+                  <div className="feedback-actions">
+                    <p className={quizData[currentQuestionIndex].isCorrect ? 'correct' : 'incorrect'}>
+                      {quizData[currentQuestionIndex].isCorrect ? 'Правильно!' : 'Неправильно!'}
+                    </p>
+                    <div className="mark-container">
+                      <button
+                          className={`mark-btn ${quizData[currentQuestionIndex].marked ? 'marked' : ''}`}
+                          onClick={() => toggleMark(currentQuestionIndex)}
+                      >
+                        {quizData[currentQuestionIndex].marked ? '★ Отмечен' : '☆ Отметить вопрос'}
+                      </button>
+                      <button
+                          className="next-btn"
+                          onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
+                      >
+                        Следующий вопрос →
+                      </button>
+                    </div>
+                  </div>
+              )}
+            </div>
         ) : (
-            <div className="result">Тест завершен!</div>
+            <div className="result">
+              <h2>Тест завершен!</h2>
+              <button className="exit-btn" onClick={handleExitQuiz}>
+                На главную
+              </button>
+            </div>
         )}
+
         {quizStarted && (
             <button className="exit-btn" onClick={handleExitQuiz}>
-              Выйти на начальный экран
+              Выйти
             </button>
         )}
       </div>
